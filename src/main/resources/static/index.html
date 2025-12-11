@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management</title>
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #fff;
+            --primary: #2563eb;
+            --primary-dark: #1e4fc7;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --success: #0ea84a;
+            --error: #b00020;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: "Inter", Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        header { padding: 24px 24px 12px; }
+        h1 { margin: 0 0 8px; }
+        p { margin: 0 0 12px; color: var(--muted); }
+        main { padding: 0 24px 32px; display: grid; gap: 16px; }
+        section { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(31,41,55,0.08); border: 1px solid var(--border); }
+        h2 { margin: 0 0 8px; }
+        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        label { display: block; margin: 4px 0; font-weight: 600; }
+        input, select { padding: 10px; width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+        button { margin-top: 10px; padding: 10px 14px; cursor: pointer; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: 600; transition: background 0.15s ease; }
+        button:hover { background: var(--primary-dark); }
+        button.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th { background: #f8fafc; }
+        .error { color: var(--error); margin-top: 6px; }
+        .success { color: var(--success); margin-top: 6px; }
+        .pill { padding: 4px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; display: inline-block; }
+        .pill.confirmed { background: rgba(16,185,129,0.15); color: #047857; }
+        .pill.cancelled { background: rgba(239,68,68,0.15); color: #b91c1c; }
+        .pill.pending { background: rgba(59,130,246,0.15); color: #1d4ed8; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+        .meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); }
+        .meta span { background: #eef2ff; padding: 6px 10px; border-radius: 10px; font-weight: 600; color: #4338ca; }
+        .banner { background: #e0f2fe; color: #075985; padding: 10px 12px; border-radius: 10px; border: 1px solid #bae6fd; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Hotel Management</h1>
+    <p>Manage guests, rooms, and bookings with the demo API. Data resets on restart.</p>
+</header>
+<main>
+    <div class="grid-2">
+        <section>
+            <div class="meta"><span>Guests</span><span>Create & list</span></div>
+            <div class="row">
+                <div>
+                    <label for="guestName">Name</label>
+                    <input id="guestName" placeholder="Alex Rivers">
+                </div>
+                <div>
+                    <label for="guestEmail">Email</label>
+                    <input id="guestEmail" placeholder="alex@example.com">
+                </div>
+                <div>
+                    <label for="guestPhone">Phone</label>
+                    <input id="guestPhone" placeholder="+1-555-0100">
+                </div>
+            </div>
+            <button id="guestSubmit">Add Guest</button>
+            <div id="guestFeedback" class="error"></div>
+            <table id="guestTable">
+                <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>ID</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section>
+            <div class="meta"><span>Rooms</span><span>In-memory</span></div>
+            <div class="row">
+                <div>
+                    <label for="roomName">Name</label>
+                    <input id="roomName" placeholder="Suite 201">
+                </div>
+                <div>
+                    <label for="roomType">Type</label>
+                    <input id="roomType" placeholder="Suite">
+                </div>
+                <div>
+                    <label for="roomRate">Nightly Rate</label>
+                    <input id="roomRate" type="number" min="0" step="0.01" placeholder="220.00">
+                </div>
+            </div>
+            <button id="roomSubmit">Add Room</button>
+            <div id="roomFeedback" class="error"></div>
+            <table id="roomTable">
+                <thead><tr><th>Name</th><th>Type</th><th>Rate</th><th>ID</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </div>
+
+    <section>
+        <div class="meta"><span>Bookings</span><span>Prevent overlaps</span></div>
+        <div class="banner">Pick a room and guest from the dropdowns to avoid ID mistakes.</div>
+        <div class="row">
+            <div>
+                <label for="bookingRoom">Room</label>
+                <select id="bookingRoom"></select>
+            </div>
+            <div>
+                <label for="bookingGuest">Guest</label>
+                <select id="bookingGuest"></select>
+            </div>
+            <div>
+                <label for="checkIn">Check-in</label>
+                <input id="checkIn" type="date">
+            </div>
+            <div>
+                <label for="checkOut">Check-out</label>
+                <input id="checkOut" type="date">
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap: wrap;">
+            <button id="bookingSubmit">Create Booking</button>
+            <button class="secondary" id="refreshBtn">Refresh Data</button>
+        </div>
+        <div id="bookingFeedback" class="error"></div>
+        <table id="bookingTable">
+            <thead><tr><th>Room</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </section>
+</main>
+
+<script>
+    const api = path => `/api${path}`;
+    const feedback = (id, message, type = "error") => {
+        const el = document.getElementById(id);
+        el.className = type;
+        el.textContent = message;
+    };
+    const clearFeedback = id => { const el = document.getElementById(id); el.textContent = ""; };
+
+    async function safeFetch(url, options = {}) {
+        try {
+            const res = await fetch(url, options);
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                let errorMsg = error.message || "Request failed";
+                if (error.details && Array.isArray(error.details) && error.details.length > 0) {
+                    errorMsg = error.details.join(", ");
+                }
+                throw new Error(errorMsg);
+            }
+            return res.json();
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async function addGuest() {
+        clearFeedback("guestFeedback");
+        const payload = {
+            name: document.getElementById("guestName").value.trim(),
+            email: document.getElementById("guestEmail").value.trim(),
+            phone: document.getElementById("guestPhone").value.trim()
+        };
+        if (!payload.name || !payload.email || !payload.phone) {
+            feedback("guestFeedback", "All guest fields are required");
+            return;
+        }
+        try {
+            await safeFetch(api("/guests"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            feedback("guestFeedback", "Guest added", "success");
+            document.getElementById("guestName").value = "";
+            document.getElementById("guestEmail").value = "";
+            document.getElementById("guestPhone").value = "";
+            await loadGuests();
+        } catch (err) {
+            feedback("guestFeedback", err.message);
+        }
+    }
+
+    async function addRoom() {
+        clearFeedback("roomFeedback");
+        const payload = {
+            name: document.getElementById("roomName").value.trim(),
+            type: document.getElementById("roomType").value.trim(),
+            nightlyRate: document.getElementById("roomRate").value
+        };
+        if (!payload.name || !payload.type || payload.nightlyRate === "") {
+            feedback("roomFeedback", "All room fields are required");
+            return;
+        }
+        try {
+            await safeFetch(api("/rooms"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            feedback("roomFeedback", "Room added", "success");
+            document.getElementById("roomName").value = "";
+            document.getElementById("roomType").value = "";
+            document.getElementById("roomRate").value = "";
+            await loadRooms();
+            await refreshSelects();
+        } catch (err) {
+            feedback("roomFeedback", err.message);
+        }
+    }
+
+    async function createBooking() {
+        clearFeedback("bookingFeedback");
+        const payload = {
+            roomId: document.getElementById("bookingRoom").value,
+            guestId: document.getElementById("bookingGuest").value,
+            checkIn: document.getElementById("checkIn").value,
+            checkOut: document.getElementById("checkOut").value
+        };
+        if (!payload.roomId || !payload.guestId || !payload.checkIn || !payload.checkOut) {
+            feedback("bookingFeedback", "Room, guest, and dates are required");
+            return;
+        }
+        try {
+            await safeFetch(api("/bookings"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            feedback("bookingFeedback", "Booking created", "success");
+            await loadBookings();
+        } catch (err) {
+            feedback("bookingFeedback", err.message);
+        }
+    }
+
+    async function cancelBooking(id) {
+        clearFeedback("bookingFeedback");
+        try {
+            await safeFetch(api(`/bookings/${id}/cancel`), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+            await loadBookings();
+        } catch (err) {
+            feedback("bookingFeedback", err.message);
+        }
+    }
+
+    async function loadGuests() {
+        const guests = await safeFetch(api("/guests"));
+        const tbody = document.querySelector("#guestTable tbody");
+        tbody.innerHTML = guests.map(g => `<tr><td>${g.name}</td><td>${g.email}</td><td>${g.phone}</td><td>${g.id}</td></tr>`).join("");
+        populateSelect("bookingGuest", guests, g => `${g.name} (${g.email})`);
+    }
+
+    async function loadRooms() {
+        const rooms = await safeFetch(api("/rooms"));
+        const tbody = document.querySelector("#roomTable tbody");
+        tbody.innerHTML = rooms.map(r => `<tr><td>${r.name}</td><td>${r.type}</td><td>$${Number(r.nightlyRate).toFixed(2)}</td><td>${r.id}</td></tr>`).join("");
+        populateSelect("bookingRoom", rooms, r => `${r.name} • ${r.type} ($${Number(r.nightlyRate).toFixed(2)})`);
+    }
+
+    async function loadBookings() {
+        const bookings = await safeFetch(api("/bookings"));
+        const tbody = document.querySelector("#bookingTable tbody");
+        tbody.innerHTML = bookings.map(b => `<tr>
+            <td>${b.roomId}</td>
+            <td>${b.guestId}</td>
+            <td>${b.checkIn}</td>
+            <td>${b.checkOut}</td>
+            <td><span class="pill ${b.status.toLowerCase()}">${b.status}</span></td>
+            <td>${b.status !== 'CANCELLED' ? `<button class="secondary" onclick="cancelBooking('${b.id}')">Cancel</button>` : ''}</td>
+        </tr>`).join("");
+    }
+
+    function populateSelect(id, items, labelBuilder) {
+        const select = document.getElementById(id);
+        const value = select.value;
+        select.innerHTML = `<option value="">-- Select --</option>` + items.map(it => `<option value="${it.id}">${labelBuilder(it)}</option>`).join("");
+        if (items.some(it => it.id === value)) {
+            select.value = value;
+        } else {
+            select.value = "";
+        }
+    }
+
+    async function refreshSelects() {
+        await Promise.all([loadGuests(), loadRooms()]);
+    }
+
+    document.getElementById("guestSubmit").addEventListener("click", addGuest);
+    document.getElementById("roomSubmit").addEventListener("click", addRoom);
+    document.getElementById("bookingSubmit").addEventListener("click", createBooking);
+    document.getElementById("refreshBtn").addEventListener("click", () => loadAll());
+
+    async function loadAll() {
+        try {
+            await Promise.all([loadGuests(), loadRooms(), loadBookings()]);
+        } catch (err) {
+            feedback("bookingFeedback", err.message);
+        }
+    }
+
+    loadAll();
+</script>
+</body>
+</html>
+
