@@ -38,7 +38,31 @@ Validation errors return 400 with details.
 ## Web UI
 Open `http://localhost:8080` after starting the app. The static page in `src/main/resources/static/index.html` calls the REST endpoints and shows guests, rooms, and bookings.
 
+## Docker Deployment
+```bash
+# Build Docker image
+docker build -t hotel-management .
+
+# Run container
+docker run -p 8080:8080 hotel-management
+
+# Or with custom port
+docker run -p 8081:8080 -e PORT=8080 hotel-management
+```
+
+## Cloud Deployment
+The application reads the `PORT` environment variable for cloud platforms (Heroku, Railway, Render, etc.):
+```bash
+export PORT=8080
+java -jar target/hotel-management-0.0.1-SNAPSHOT.jar
+```
+
+## Health Check
+- `GET /api/health` - Returns application health status
+
 ## Notes
 - Data is stored in memory; restart resets data. `DataInitializer` seeds sample rooms/guests.
-- Extendable to real DB and CI/CD as needed (Dockerfile/pipeline not included to keep the skeleton lean).
+- Port can be configured via `PORT` environment variable (defaults to 8080).
+- CORS is enabled for all origins to support web UI access.
+- Extendable to real DB and CI/CD as needed.
 
